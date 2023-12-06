@@ -1,21 +1,17 @@
-# Use the official lightweight Python image.
-# https://hub.docker.com/_/python
-FROM python:3.11-slim
+# Use the official Python image as a parent image
+FROM python:3.9
 
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED True
+# Set the working directory to /app
+WORKDIR /app
 
-# Copy local code to the container image.
-ENV APP_HOME /app
-WORKDIR $APP_HOME
-COPY . ./
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Install production dependencies.
-RUN pip install --no-cache-dir -r requirements.txt
+# Install FastAPI and any other dependencies
+RUN pip install -r requirements.txt
 
-# Run the web service on container startup. Here we use the gunicorn
-# webserver, with one worker process and 8 threads.
-# For environments with multiple CPU cores, increase the number of workers
-# to be equal to the cores available.
-# Timeout is set to 0 to disable the timeouts of the workers to allow Cloud Run to handle instance scaling.
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 main:app
+# Expose the port that FastAPI will run on
+EXPOSE 8000
+
+# Define the command to run your FastAPI app
+CMD ["uvicorn", "main:fastapi_app", "--host", "0.0.0.0", "--port", "8000"]
