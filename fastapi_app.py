@@ -5,7 +5,6 @@ from google.cloud import storage
 from pydantic import BaseModel
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 from typing import List
-import os
 
 app = FastAPI()
 
