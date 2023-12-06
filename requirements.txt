@@ -4,5 +4,4 @@ requests
 google-cloud-storage
 pydantic
 transformers
-torch
 pickle
