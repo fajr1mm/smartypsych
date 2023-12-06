@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install -r requirements.txt
 
 # Define the command to run your FastAPI app
-CMD uvicorn fastapi_app:app --port=8000 --host0.0.0.0
+CMD uvicorn fastapi_app:app --port=8000 --host=0.0.0.0
