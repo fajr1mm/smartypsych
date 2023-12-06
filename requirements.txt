@@ -5,4 +5,4 @@ google-cloud-storage
 pydantic
 transformers
 torch
-pickle5
+pickle
