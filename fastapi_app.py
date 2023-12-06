@@ -8,6 +8,10 @@ from typing import List
 
 app = FastAPI()
 
+# Tentukan URL publik untuk file model dan tokenizer
+model_url = 'https://storage.googleapis.com/analisis-psikotes/t5_model.pkl'  # Ganti dengan URL publik model di Cloud Storage
+tokenizer_url = 'https://storage.googleapis.com/analisis-psikotes/t5_tokenizer.pkl'  # Ganti dengan URL publik tokenizer di Cloud Storage
+
 def load_from_gcs(bucket_name, file_name):
     client = storage.Client.create_anonymous_client()
     bucket = client.bucket(bucket_name)
