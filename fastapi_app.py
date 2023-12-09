@@ -76,7 +76,7 @@ def train_model(item: Item):
     
     model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
     nltk.download("punkt")
-
+    #tess
     metric = evaluate.load("f1")
     token = tokenize(dataset)
     tokenized_dataset = dataset.map(preprocess_function, batched=True, remove_columns=['RESPONSE', 'LEVEL KOMPETENSI'])

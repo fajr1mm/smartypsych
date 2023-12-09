@@ -90,28 +90,16 @@ def predict():
 
 @app.route('/train')
 def train():
-    response, status_code = fetch_database()
-
-    # Mengonversi respons JSON ke bentuk dictionary
-    json_data = response.json()
-
-    # Mencetak isi dictionary ke terminal
-    print(json_data)
-
-    # data_train, status_code = fetch_database()
-    # print(data_train.text)
-    # df_train, df_test = train_test_split(data_train, test_size=0.3, random_state=42)
-    return response
-
+    data_train = fetch_database()
+    df_train, df_test = train_test_split(data_train, test_size=0.3, random_state=42)
+    print(df_train)
     # response = requests.post(f"{API_URL}/train", json=split_train)
 
-        # if response.status_code == 200:
-        #     version += 0.1
-        #     return ["version":{
-        #             "model": f"t5_model_v{version}.pkl",
-        #             "tokenizer": f"t5_tokenizer_v{version}.pkl"}]
-        # else:
-        #     return "Gagal mengirim data ke FastAPI."
+    if data_train:
+        version += 0.1
+        return {"model": f"t5_model_v{version}.pkl"}
+    else:
+        return "Gagal mengirim data ke FastAPI."
 
 
 @app.route('/update-data-training', methods=['POST'])
