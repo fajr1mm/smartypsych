@@ -8,21 +8,29 @@ from typing import List
 
 app = FastAPI()
 
-# Tentukan URL publik untuk file model dan tokenizer
-model_url = 'https://storage.googleapis.com/analisis-psikotes/t5_model.pkl'  # Ganti dengan URL publik model di Cloud Storage
-tokenizer_url = 'https://storage.googleapis.com/analisis-psikotes/t5_tokenizer.pkl'  # Ganti dengan URL publik tokenizer di Cloud Storage
+# model_url = 'https://storage.googleapis.com/analisis-psikotes/t5_model.pkl'  
+# tokenizer_url = 'https://storage.googleapis.com/analisis-psikotes/t5_tokenizer.pkl'  
 
-def load_from_gcs(bucket_name, file_name):
-    client = storage.Client.create_anonymous_client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(file_name)
-    file_bytes = blob.download_as_bytes()
-    return pickle.loads(file_bytes)
+# def load_from_gcs(bucket_name, file_name):
+#     client = storage.Client.create_anonymous_client()
+#     bucket = client.bucket(bucket_name)
+#     blob = bucket.blob(file_name)
+#     file_bytes = blob.download_as_bytes()
+#     return pickle.loads(file_bytes)
 
 
-# Load the model (e.g., at startup)
-model = load_from_gcs('analisis-psikotes', 't5_model.pkl')
-tokenizer = load_from_gcs('analisis-psikotes', 't5_tokenizer.pkl')
+# Load the model
+# model = load_from_gcs('analisis-psikotes', 't5_model.pkl')
+# tokenizer = load_from_gcs('analisis-psikotes', 't5_tokenizer.pkl')
+
+
+# Load your pickled model
+with open('t5_model.pkl', 'rb') as model_file:
+    model = pickle.load(model_file)
+
+# Load your pickled tokenizer
+with open('t5_tokenizer.pkl', 'rb') as tokenizer_file:
+    tokenizer = pickle.load(tokenizer_file)
 
 class InputItem(BaseModel):
     id: str
@@ -53,7 +61,3 @@ def predict(input_batch: List[InputItem]):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,6 +1,4 @@
-fastapi
-uvicorn
-requests
-google-cloud-storage
-pydantic
+pickle
+fastapipydantic
 transformers
+typing

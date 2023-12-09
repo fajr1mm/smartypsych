@@ -1,1 +1,2 @@
-model/
+t5_model.pkl
+t5_tokenizer.pkl
