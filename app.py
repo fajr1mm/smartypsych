@@ -91,8 +91,8 @@ def predict():
 @app.route('/train')
 def train():
     data_train = fetch_database()
-    df_train, df_test = train_test_split(data_train, test_size=0.3, random_state=42)
-    print(df_train)
+    get = data_train.get_json(force=True)
+    print(get)
     # response = requests.post(f"{API_URL}/train", json=split_train)
 
     if data_train:
