@@ -1,51 +1,133 @@
 from flask import Flask, request, jsonify, render_template
-import pickle
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+import requests
+from fastapi_app import InputItem, PredictionItem
+import mysql.connector
+from sklearn.model_selection import train_test_split
 
 app = Flask(__name__)
 
-# Load your pickled model
-with open('t5_model.pkl', 'rb') as model_file:
-    model = pickle.load(model_file)
+API_URL = 'http://127.0.0.1:8000'
 
-# Load your pickled tokenizer
-with open('t5_tokenizer.pkl', 'rb') as tokenizer_file:
-    tokenizer = pickle.load(tokenizer_file)
+def fetch_database():
+        # try:
+        # connect database
+        connection = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password=None,
+            database='engine_smartpsych'
+        )
 
-@app.route('/')
-def index():
-    return render_template('index.html')   
+        cursor = connection.cursor()
+
+        query = "SELECT * FROM data_training"
+
+        cursor.execute(query)
+
+        results = cursor.fetchall()
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "berhasil"}), 200
+
+    # except Exception as e:
+    #     return jsonify({"error": str(e)}), 500
+
+def save_to_database(data):
+    try:
+        # connect database
+        connection = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password=None,
+            database='engine_smartpsych'
+        )
+
+        cursor = connection.cursor()
+
+        query = "INSERT INTO data_training (RESPONSE, LEVEL) VALUES (%s, %s)"
+
+        for item in data['batch']:
+            values = (item['RESPONSE'], item['LEVEL'])
+            cursor.execute(query, values)
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "berhasil"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Ambil data dari permintaan POST
+       # Ambil data dari permintaan POST
         data = request.get_json(force=True)
-        # print(data)
         input_batch = data['batch']
 
-        # Lakukan prediksi untuk setiap input dalam batch
-        API_URL = 'https://be87-125-163-7-230.ngrok-free.app'
-        predictions = []
-        for input_item in input_batch:
-            input_text = f"{input_item['id']} {input_item['dimensi']} {input_item['jawaban']}"
+       # Ubah struktur data sesuai dengan skema InputItem
+        input_items = [
+            InputItem(id=item['id'], dimensi=item['dimensi'], jawaban=item['jawaban'])
+            for item in input_batch
+        ]
 
-            # Tokenisasi teks input
-            inputs = tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True)
+        print(input_items)
+        response = requests.post(f"{API_URL}/predict", json=[item.dict() for item in input_items])
+        predictions = response.json()
+        print(predictions)
 
-            # Lakukan inferensi menggunakan model
-            output = model.generate(**inputs)
-            prediction = tokenizer.decode(output[0], skip_special_tokens=True)
-
-            # Tambahkan hasil prediksi ke daftar
-            predictions.append({'id': input_item['id'], 'label': prediction})
-
-        # print(predictions)
-        return jsonify(predictions)
+        return predictions
 
     except Exception as e:
         return jsonify({'error': str(e)})
 
+@app.route('/train')
+def train():
+    response, status_code = fetch_database()
+
+    # Mengonversi respons JSON ke bentuk dictionary
+    json_data = response.json()
+
+    # Mencetak isi dictionary ke terminal
+    print(json_data)
+
+    # data_train, status_code = fetch_database()
+    # print(data_train.text)
+    # df_train, df_test = train_test_split(data_train, test_size=0.3, random_state=42)
+    return response
+
+    # response = requests.post(f"{API_URL}/train", json=split_train)
+
+        # if response.status_code == 200:
+        #     version += 0.1
+        #     return ["version":{
+        #             "model": f"t5_model_v{version}.pkl",
+        #             "tokenizer": f"t5_tokenizer_v{version}.pkl"}]
+        # else:
+        #     return "Gagal mengirim data ke FastAPI."
+
+
+@app.route('/update-data-training', methods=['POST'])
+def update_data_training():
+    try:
+        data = request.get_json(force=True)
+
+        # fungsi untuk save datanya
+        response, status_code = save_to_database(data)
+
+        return response, status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     # Jalankan aplikasi Flask
     app.run(host='127.0.0.1', port=8080, debug=True)
+
