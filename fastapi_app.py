@@ -46,7 +46,7 @@ def predict(input_batch: List[InputItem]):
     try:
         predictions = []
         for input_item in input_batch:
-            input_text = f"{input_item.id} {input_item.dimensi} {input_item.jawaban}"
+            input_text = f"{input_item.dimensi} {input_item.jawaban}"
 
             # Tokenisasi teks input
             inputs = tokenizer(input_text, return_tensors="pt", max_length=512, truncation=True)
