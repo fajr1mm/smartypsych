@@ -28,7 +28,7 @@ def predict():
             for item in input_batch
         ]
 
-        # print(input_items)
+        print(input_items)
         response = requests.post(API_URL, json=[item.dict() for item in input_items])
         predictions = response.json()
         print(predictions)
