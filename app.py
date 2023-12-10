@@ -3,42 +3,30 @@ import requests
 from fastapi_app import InputItem, PredictionItem
 import mysql.connector
 from sklearn.model_selection import train_test_split
+from datasets import Dataset, DatasetDict
 
 app = Flask(__name__)
 
-API_URL = 'http://127.0.0.1:8000'
+API_URL = 'http://127.0.0.1:8001'
 
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
 
 def fetch_database():
-        # try:
-        # connect database
         connection = mysql.connector.connect(
             host='localhost',
             user='root',
             password=None,
             database='engine_smartpsych'
         )
-
-        cursor = connection.cursor()
-
+        cursor = connection.cursor(dictionary=True)
         query = "SELECT * FROM data_training"
-
         cursor.execute(query)
-
         results = cursor.fetchall()
-
-        connection.commit()
-
         cursor.close()
-        connection.close()
 
-        return jsonify({"message": "berhasil"}), 200
-
-    # except Exception as e:
-    #     return jsonify({"error": str(e)}), 500
+        return results
 
 def save_to_database(data):
     try:
@@ -95,15 +83,29 @@ def predict():
 @app.route('/train')
 def train():
     data_train = fetch_database()
-    get = data_train.get_json(force=True)
-    print(get)
-    # response = requests.post(f"{API_URL}/train", json=split_train)
+    train_data, test_data = train_test_split(data_train, test_size=0.3, random_state=42)
 
-    if data_train:
-        version += 0.1
-        return {"model": f"t5_model_v{version}.pkl"}
-    else:
-        return "Gagal mengirim data ke FastAPI."
+    dataset = DatasetDict({
+        "train": train_data,
+        "test": test_data,
+    })
+
+    # Forward the dataset to FastAPI
+    response = requests.post(f"{API_URL}/train", json={"data": dataset})
+    response_data = response.json()
+
+    # Save the model and tokenizer using pickle
+    version = response_data.get("version")
+    local_model_dir = f"./model/v{version}"
+    
+    with open(f"{local_model_dir}/t5_model_{version}.pkl", "wb") as model_file:
+        pickle.dump(response_data["model"], model_file)
+
+    with open(f"{local_model_dir}/t5_tokenizer_{version}.pkl", "wb") as tokenizer_file:
+        pickle.dump(response_data["tokenizer"], tokenizer_file)
+
+    return jsonify(response_data)
+    # return dataset
 
 
 @app.route('/update-data-training', methods=['POST'])

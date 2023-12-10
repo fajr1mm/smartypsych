@@ -3,7 +3,9 @@ import requests
 from fastapi import FastAPI, HTTPException
 from google.cloud import storage
 from pydantic import BaseModel
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import T5Tokenizer, DataCollatorForSeq2Seq
+from transformers import T5ForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from typing import List
 
 app = FastAPI()
@@ -66,7 +68,9 @@ def predict(input_batch: List[InputItem]):
 
 ## TRAIN
 class Item(BaseModel):
-    data: list
+    data: dict
+
+model_version = 1.0
 
 @app.post('/train')
 def train_model(item: Item):
@@ -125,18 +129,18 @@ def train_model(item: Item):
     trainer.train()
     
     # Menyimpan model dan tokenizer
-    local_model_dir = f"./model/v{version}"
-    model.save_pretrained(local_model_dir)
-    tokenizer.save_pretrained(local_model_dir)
-
-    # Menyimpan model dan tokenizer menggunakan pickle
-    with open(f"t5_model_v{version}.pkl", "wb") as model_file:
+    local_model_dir = f"./model/v{model_version}"
+    
+    with open(f"{local_model_dir}/t5_model_{model_version}.pkl", "wb") as model_file:
         pickle.dump(model, model_file)
 
-    with open(f"t5_tokenizer_v{version}.pkl", "wb") as tokenizer_file:
+    with open(f"{local_model_dir}/t5_tokenizer_{model_version}.pkl", "wb") as tokenizer_file:
         pickle.dump(tokenizer, tokenizer_file)
 
-    version += 0.1
+    # Increment the model version for the next run
+    model_version += 0.1
+
+    return {"model": model, "tokenizer": tokenizer, "version": model_version}
 
 
 def tokenize_dataset(dataset):
