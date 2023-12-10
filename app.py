@@ -96,7 +96,7 @@ def train():
 
     # Save the model and tokenizer using pickle
     version = response_data.get("version")
-    local_model_dir = f"./model/v{version}"
+    local_model_dir = f"./testmodel/v{version}"
     
     with open(f"{local_model_dir}/t5_model_{version}.pkl", "wb") as model_file:
         pickle.dump(response_data["model"], model_file)

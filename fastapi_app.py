@@ -7,6 +7,8 @@ from transformers import T5Tokenizer, DataCollatorForSeq2Seq
 from transformers import T5ForConditionalGeneration, Seq2SeqTrainingArguments, Seq2SeqTrainer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from typing import List
+import nltk
+import evaluate
 
 app = FastAPI()
 
@@ -73,7 +75,7 @@ class Item(BaseModel):
 model_version = 1.0
 
 @app.post('/train')
-def train_model(item: Item):
+def train_model(dataset):
     global model_version
     model_id="google/flan-t5-base"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -82,7 +84,6 @@ def train_model(item: Item):
     nltk.download("punkt")
     #tess
     metric = evaluate.load("f1")
-    token = tokenize(dataset)
     tokenized_dataset = dataset.map(preprocess_function, batched=True, remove_columns=['RESPONSE', 'LEVEL KOMPETENSI'])
     
     label_pad_token_id = -100
@@ -129,7 +130,7 @@ def train_model(item: Item):
     trainer.train()
     
     # Menyimpan model dan tokenizer
-    local_model_dir = f"./model/v{model_version}"
+    local_model_dir = f"./testmodel/v{model_version}"
     
     with open(f"{local_model_dir}/t5_model_{model_version}.pkl", "wb") as model_file:
         pickle.dump(model, model_file)
